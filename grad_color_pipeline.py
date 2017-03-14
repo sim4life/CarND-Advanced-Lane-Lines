@@ -7,19 +7,53 @@ def gc_pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(np.float)
     hls_s_channel = hls[:,:,2]
 
-    # plt.imshow(hls_s_channel, cmap='gray')
-    # plt.show()
-    # hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float)
-    # hsv_v_channel = hsv[:,:,2]
-
     sxbinary = abs_sobel_thresh(hls_s_channel, orient='x', sobel_kernel=3, thresh=sx_thresh)
     s_binary = channel_thresh(hls_s_channel, s_thresh)
-    # sxbinary = abs_sobel_thresh(hsv_v_channel, orient='x', sobel_kernel=3, thresh=sx_thresh)
-    # s_binary = channel_thresh(hsv_v_channel, s_thresh)
+    # Combining gradient threshold binary and color threshold binary
+    combined_binary = np.zeros_like(sxbinary)
+    combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
 
-    # Stack each channel
-    # Note color_binary[:, :, 0] is all 0s, effectively an all black image. It might
-    # be beneficial to replace this channel with something else.
+    return combined_binary
+
+def gxy_pipeline(img, x_thresh=(15, 255), y_thresh=(25, 255)):
+    img = np.copy(img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float)
+
+    sxbinary = abs_sobel_thresh(gray, orient='x', sobel_kernel=3, thresh=x_thresh)
+    sybinary = abs_sobel_thresh(gray, orient='y', sobel_kernel=3, thresh=y_thresh)
+
+    combined_binary = np.zeros_like(sxbinary)
+    combined_binary[(sxbinary == 1) & (sybinary == 1)] = 1
+
+    return combined_binary
+
+def csv_pipeline(img, s_thresh=(170, 255), v_thresh=(20, 100)):
+    img = np.copy(img)
+
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(np.float)
+    hls_s_channel = hls[:,:,2]
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float)
+    hsv_v_channel = hsv[:,:,2]
+
+    s_binary = channel_thresh(hls_s_channel, s_thresh)
+    v_binary = channel_thresh(hsv_v_channel, v_thresh)
+
+    combined_binary = np.zeros_like(s_binary)
+    combined_binary[(s_binary == 1) & (v_binary == 1)] = 1
+
+    return combined_binary
+
+def gc_pipelineV(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
+    img = np.copy(img)
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float)
+    hsv_v_channel = hsv[:,:,2]
+
+    sxbinary = abs_sobel_thresh(hsv_v_channel, orient='x', sobel_kernel=3, thresh=sx_thresh)
+    s_binary = channel_thresh(hsv_v_channel, s_thresh)
+
     # color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary))
     combined_binary = np.zeros_like(sxbinary)
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
@@ -32,18 +66,27 @@ def gc_pipeline_comb(img, s_thresh=(170, 255), xy_th=(20, 100), mag_th=(20, 100)
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(np.float)
     hls_s_channel = hls[:,:,2]
 
-    # hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float)
-    # hsv_s_channel = hsv[:,:,1]
-
     sxbinary = combined_thresh(hls_s_channel, xy_thresh=xy_th, m_thresh=mag_th, d_thresh=dir_th)
     s_binary = channel_thresh(hls_s_channel, s_thresh)
-    # sxbinary = combined_thresh(hsv_s_channel, xy_thresh=xy_th, m_thresh=mag_th, d_thresh=dir_th)
-    # s_binary = channel_thresh(hsv_s_channel, s_thresh)
 
     # Stack each channel
     # Note color_binary[:, :, 0] is all 0s, effectively an all black image. It might
     # be beneficial to replace this channel with something else.
     # color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary))
+    combined_binary = np.zeros_like(sxbinary)
+    combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
+
+    return combined_binary
+
+def gc_pipeline_combV(img, s_thresh=(170, 255), xy_th=(20, 100), mag_th=(20, 100), dir_th=(0.7, 1.3)):
+    img = np.copy(img)
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float)
+    hsv_s_channel = hsv[:,:,1]
+
+    sxbinary = combined_thresh(hsv_s_channel, xy_thresh=xy_th, m_thresh=mag_th, d_thresh=dir_th)
+    s_binary = channel_thresh(hsv_s_channel, s_thresh)
+
     combined_binary = np.zeros_like(sxbinary)
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
 

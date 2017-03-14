@@ -87,30 +87,60 @@ def corners_unwarp(img, nx, ny, mtx, dist, single_ch=False, out_dir='warped'):
 
     # Grab the image shape
     img_size = (gray.shape[1], gray.shape[0])
-    print("img_zie is, ", img_size)
 
     # For source points I'm grabbing the trapeziod coordinates of two lane lines
     # src = np.float32([[615, 437], [663, 437], [1057, 688], [247, 688]])
     src = np.float32([[595, 449], [684, 449], [1057, 688], [247, 688]])
-    print("src np is,", src)
     # For destination points, I'm choosing some points based on undistorted image
 
     # dst = np.float32([[270, 0], [1040, 0], [1040, img_size[1]], [270, img_size[1]]])
     dst = np.float32([[247, 0], [1057, 0], [1057, img_size[1]], [247, img_size[1]]])
-    print("dst np is,", dst)
 
     M = cv2.getPerspectiveTransform(src, dst)
+    M_inv = cv2.getPerspectiveTransform(dst, src)
     warped = cv2.warpPerspective(undist_img, M, img_size, flags=cv2.INTER_LINEAR)
-    # warped = cv2.warpPerspective(undist_img, M, img_size)
-    return warped, M
+    return warped, M, M_inv
+
+def corners_unwarp_offset(img, nx, ny, mtx, dist, single_ch=False, out_dir='warped'):
+
+    undist_img = cv2.undistort(img, mtx, dist, None, mtx)
+
+    gray = img
+    if single_ch == False:
+        gray = cv2.cvtColor(undist_img, cv2.COLOR_BGR2GRAY)
+
+    # Grab the image shape
+    img_size = (gray.shape[1], gray.shape[0])
+    ## bot_width = 0.633 # 0.76 # percent of bottom trapeziod height
+    mid_width = 0.07 # 0.08 # percent of middle trapeziod width
+    height_pct = 0.62 # percent of trapeziod height
+    bot_width_r = 0.65 # 0.76 # percent of bottom right trapeziod height
+    bot_width_l = 0.614 #percent of bottom left trapeziod width
+    bottom_trim = 0.955 #0.935 # percent from top to bottom to avoid car hood
+    # bot_width_r = 0.628 # original: percent of bottom right trapeziod width
+    # bot_width_l = 0.58 # original: percent of bottom left trapeziod width
+    # bottom_trim = 0.936 # original: percent from top to bottom to avoid car hood
+
+    # For source points I'm grabbing the trapeziod coordinates of two lane lines
+    # src = np.float32([[595, 449], [684, 449], [1057, 688], [247, 688]]) # undistored image
+    # src = np.float32([[613, 437], [664, 437], [1042, 674], [268, 674]]) # original image
+    src = np.float32([[gray.shape[1]*(0.5-mid_width/2), gray.shape[0]*height_pct],[gray.shape[1]*(0.5+mid_width/2), gray.shape[0]*height_pct], [gray.shape[1]*(0.5+bot_width_r/2), gray.shape[0]*bottom_trim], [gray.shape[1]*(0.5-bot_width_l/2), gray.shape[0]*bottom_trim]])
+    offset = img_size[0]*0.25
+
+    # For destination points, I'm choosing some points based on undistorted image
+    dst = np.float32([[offset, 0], [img_size[0]-offset, 0], [img_size[0]-offset, img_size[1]], [offset, img_size[1]]])
+    # dst = np.float32([[247, 0], [1057, 0], [1057, img_size[1]], [247, img_size[1]]])
+
+    M = cv2.getPerspectiveTransform(src, dst)
+    M_inv = cv2.getPerspectiveTransform(dst, src)
+    warped = cv2.warpPerspective(undist_img, M, img_size, flags=cv2.INTER_LINEAR)
+    return warped, undist_img, M, M_inv
 
 def min_t_pipeline(test_img, params_file, single_ch=False):
-    # test_img = cv2.imread(image_filename)
-    print("test_image type,", type(test_img))
     # Reading in the saved objpoints, imgpoints, mtx, dist
     objpoints, imgpoints, mtx, dist = load_params(in_file=params_file)
-    warped_img, perspective_M = corners_unwarp(test_img, nx, ny, mtx, dist, single_ch, out_dir=warp_out_dir)
-    return warped_img, perspective_M
+    warped_img, undist_img, perspective_M, perspective_M_inv = corners_unwarp_offset(test_img, nx, ny, mtx, dist, single_ch, out_dir=warp_out_dir)
+    return warped_img, undist_img, perspective_M, perspective_M_inv
 
 def half_t_pipeline(image_filename, params_file):
     test_img = cv2.imread(image_filename)

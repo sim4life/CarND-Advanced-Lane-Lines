@@ -1,2 +1,6 @@
 project_video_*.mp4
 !project_video_proc.mp4
+challenge_video_*.mp4
+.DS_Store
+.backup
+__pycache__

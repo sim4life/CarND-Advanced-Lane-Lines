@@ -1,6 +1,8 @@
 project_video_*.mp4
 !project_video_proc.mp4
 challenge_video_*.mp4
+harder_challenge_video_*.mp4
+test_images/Curve*.jpg
 .DS_Store
 .backup
 __pycache__

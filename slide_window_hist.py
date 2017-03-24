@@ -71,9 +71,6 @@ def slide_window(binary_warped):
     right_fit = np.polyfit(righty, rightx, 2)
 
     # Generate x and y values for plotting
-    # ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
-    # left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    # right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
     left_fitx, right_fitx = fit_curve(binary_warped, left_fit, right_fit)
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]

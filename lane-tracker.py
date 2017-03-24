@@ -1,5 +1,6 @@
 import sys, getopt
 import cv2
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,20 +8,21 @@ from transforms import min_t_pipeline, half_t_pipeline, full_t_pipeline
 from grad_color_pipeline import gc_pipeline, gc_pipeline_comb, gc_pipelineV, gc_pipeline_combV, csv_pipeline, gxy_pipeline
 from slide_window_hist import slide_window, skip_slide_window, fit_curve
 # from conv_window import convolve_window
-from lane_curvature import draw_lane_curve, plot_lane_curve, calculate_lane_curve_radius
+from lane_curvature import draw_lane_curve, plot_lane_curve, calculate_lane_curve_radius, printHist
 from Tracker import Tracker
 from video_gen import process_video
 from Line import Line
 
 params_out_file = 'output_rsc/wide_dist_pickle.p'
+pickle_file     = 'output_rsc/line_fit_pickle.p'
 output_dir      = 'output_images/warped'
-SKIP_FRAME      = 9
+SKIP_FRAME      = 2
 skip_factor     = 0
 frame_cnt       = 0
 left_fit        = np.array([0,0,0], dtype=np.float64)
 right_fit       = np.array([0,0,0], dtype=np.float64)
-leftLine = Line()
-rightLine = Line()
+leftFitLine     = Line()
+rightFitLine    = Line()
 
 def gct_bin_pipeline(test_img, params_file, out_dir=output_dir):
     binary_img = gc_pipeline(test_img)#, s_thresh=(170, 245), sx_thresh=(30, 90))
@@ -38,8 +40,8 @@ def gctc_pipeline(test_img):
     # leftx, lefty, rightx, righty = np.array(dtype=np.int64)
     global left_fit
     global right_fit
-    global leftLine
-    global rightLine
+    global leftFitLine
+    global rightFitLine
     global frame_cnt
 
     warped_img, _, perspective_M, perspective_M_inv = gct_bin_pipeline(test_img, params_file=params_file, out_dir=out_dir)
@@ -58,6 +60,22 @@ def gctc_pipeline(test_img):
         leftx, lefty, rightx, righty, left_fit, right_fit = skip_slide_window(warped_img, left_fit, right_fit)
         skip_factor -= 1
         frame_cnt += 1
+
+
+    # leftFitLine = Line()
+    if leftFitLine.isLineDetected(left_fit):
+        leftFitLine.addFit(left_fit)
+    else:
+        leftFitLine.addFit(leftFitLine.avg_lastnfits)
+        left_fit = leftFitLine.avg_lastnfits
+    # leftFitLine.printVals()
+    # rightFitLine = Line()
+    if rightFitLine.isLineDetected(right_fit):
+        rightFitLine.addFit(right_fit)
+    else:
+        rightFitLine.addFit(rightFitLine.avg_lastnfits)
+        right_fit = rightFitLine.avg_lastnfits
+    # rightFitLine.printVals()
 
     # print("left_fit is:", left_fit)
     # print("right_fit is:", right_fit)
@@ -96,6 +114,7 @@ def gct_pipelineV(test_image, params_file, out_dir=output_dir):
 
 def main(argv):
     params_file = params_out_file
+    # pickle_file =
     op          = 'none'
     test_image  = 'camera_cal/calibration3.jpg'
     op          = 'gct' # perspective transform, gradient masking, color masking
@@ -186,12 +205,44 @@ def main(argv):
         print('right_fitx type is:,',type(right_fitx))
         print('right_fitx shape is:,',right_fitx.shape)
         print('right_fitx dtype is:,',right_fitx.dtype)
-        leftFitLine = Line(left_fit, left_fitx)
-        leftFitLine.printVals()
+        leftLine = Line()
+        dummy1 = np.array([1.,2.,3.], dtype='float')
+        if leftLine.isLineDetected(dummy1):
+            leftLine.addFit(dummy1)#left_fit)
+        # leftFitLine.addFit(right_fit)
+        dummy2 = np.array([2.,5.,3.], dtype='float')
+        if leftLine.isLineDetected(dummy2):
+            leftLine.addFit(dummy2)
+        dummy3 = np.array([1.,2.,3.], dtype='float')
+        if leftLine.isLineDetected(dummy3):
+            leftLine.addFit(dummy3)
+        dummy4 = np.array([3.,2.,3.], dtype='float')
+        if leftLine.isLineDetected(dummy4):
+            leftLine.addFit(dummy4)
+        print("vals is:")
+        leftLine.printVals()
+        aa_diffs = np.absolute(leftLine.avg_diffs)
+        la_max = np.amax(aa_diffs, axis=0)
+        la_amax = np.argmax(aa_diffs)
+        print("avg_diffs are:", aa_diffs)
+        print("la_max is:", la_max)
+        print("la_amax is:", la_amax)
+        print("la_amax val is:", aa_diffs[la_amax])
+        ar_diffs = np.absolute(leftLine.recent_diffs)
+        lr_max = np.amax(ar_diffs, axis=1)
+        lr_amax = np.argmax(ar_diffs)
+        print("recent_diffs are:", ar_diffs)
+        print("lr_max is:", lr_max)
+        print("lr_amax is:", lr_amax)
+        print("lr_amax val is:", ar_diffs[lr_amax])
         print("left_fit is:",left_fit)
         print("right_fit is:",right_fit)
-        rightFitLine = Line(right_fit, right_fitx)
-        rightFitLine.printVals()
+        rightLine = Line()
+        rightLine.addFit(right_fit)
+        rightLine.printVals()
+        print("rightLine best_fit is: ",rightLine.best_fit)
+        print('left_fit is:,',left_fit)
+        print('right_fit is:,',right_fit)
 
     elif op == 'gctwvid':
         input_video_file = test_image
@@ -201,7 +252,18 @@ def main(argv):
 
         process_video(process_image=gctc_pipeline, params_file=params_file, in_vid=input_video_file, out_vid=output_video_file)
 
-        # print('test_i is:',test_i)
+        print('leftFitLine best_fit is:',leftFitLine.best_fit)
+        print('rightFitLine best_fit is:',rightFitLine.best_fit)
+        vals_pickle = {}
+        vals_pickle["recent_lnfits"]   = leftFitLine.recent_nfits
+        vals_pickle["lavg_diffs"]      = leftFitLine.avg_diffs
+        vals_pickle["lrecent_diffs"]   = leftFitLine.recent_diffs
+        vals_pickle["recent_rnfits"]   = rightFitLine.recent_nfits
+        vals_pickle["ravg_diffs"]      = rightFitLine.avg_diffs
+        vals_pickle["rrecent_diffs"]   = rightFitLine.recent_diffs
+        pickle.dump( vals_pickle, open( pickle_file, "wb" ) )
+
+        printHist(leftFitLine.recent_nfits, rightFitLine.recent_nfits)
     elif op == 'gcvxytw':
         # Running gradient_color masking then min transformation pipeline
         warped_img, perspective_M = gcvxyt_pipeline(test_image, params_file=params_file, out_dir=output_dir)
@@ -240,6 +302,31 @@ def main(argv):
 
         curve_centres.draw_lane_lines(warped_img, test_img, leftx, rightx, perspective_M_inv)
 
+    elif op == 'hist':
+        vals_pickle = pickle.load( open( pickle_file, "rb" ) )
+        recent_lnfits   = vals_pickle["recent_lnfits"]
+        recent_rnfits   = vals_pickle["recent_rnfits"]
+        lavg_diffs      = vals_pickle["lavg_diffs"]
+        lrecent_diffs   = vals_pickle["lrecent_diffs"]
+        ravg_diffs      = vals_pickle["ravg_diffs"]
+        rrecent_diffs   = vals_pickle["rrecent_diffs"]
+
+        rr_diffs = np.absolute(rrecent_diffs)
+        rr_tmax = np.amax(rr_diffs)
+        rr_max = np.amax(rr_diffs, axis=0)
+        rr_amax = np.argmax(rr_diffs, axis=0)
+
+        print("len recent_rnfits is:", len(recent_rnfits))
+        print("len ravg_diffs is:", len(ravg_diffs))
+        print("len rrecent_diffs is:", len(rrecent_diffs))
+        print("rr_tempmax is:", rr_tmax)
+        print("rr_max is:", rr_max)
+        print("rr_amax is:", rr_amax)
+        print("diffs_amax is:", rr_diffs[rr_amax])
+        # print(rrecent_diffs)
+        printHist(recent_lnfits, recent_rnfits)
+        printHist(lavg_diffs, ravg_diffs)
+        printHist(lrecent_diffs, rrecent_diffs)
     else:
         print("Wrong load option provided: 'all_trans', 'objimg', 'trans', 'gct', 'gctw'")
         sys.exit()

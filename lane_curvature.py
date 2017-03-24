@@ -137,3 +137,31 @@ def draw_lane_curve(undistort_img, binary_warped, M_inv, left_fitx, right_fitx, 
     # plt.imshow(result)
     # plt.show()
     return result
+
+def printHist(x_val, y_val):
+
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+    f.tight_layout()
+    bins = 5
+
+    # ax1.imshow(binary_warped, cmap='gray')
+    ax1.hist(x_val, bins)
+    ax1.set_title('X_val', fontsize=8)
+    ax1.set_xlabel("Value")
+    ax1.set_ylabel("Frequency")
+
+    # plt.xlim(-1500, 1500)
+    # plt.ylim(1500, 1500)
+
+    ax2.hist(y_val, bins)
+    ax2.set_title('Y_val', fontsize=8)
+    ax2.set_xlabel("Value")
+    ax2.set_ylabel("Frequency")
+
+    plt.subplots_adjust(left=0.08, right=0.95, top=0.9, bottom=0.1)
+    # plt.xlim(0, 1280)
+    # plt.ylim(720, 0)
+    # plt.xlim(-1500, 1500)
+    # plt.ylim(1500, 1500)
+
+    plt.show()

@@ -23,7 +23,7 @@ The goals / steps of this project are the following:
 [image3]: ./examples/lane_curve_t2.png "Warp Example"
 [image4]: ./examples/curve_drawn.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[video1]: ./project_video_proc.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -130,7 +130,7 @@ I implemented this step in lines 9 through 17 in my code in `video_gen.py` in th
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video_proc.mp4)
+Here's a [link to my video result][video1]
 
 ---
 

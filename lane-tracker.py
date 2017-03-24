@@ -26,7 +26,7 @@ rightFitLine    = Line()
 
 def gct_bin_pipeline(test_img, params_file, out_dir=output_dir):
     binary_img = gc_pipeline(test_img)#, s_thresh=(170, 245), sx_thresh=(30, 90))
-    warped_img, undist_img, perspective_M, perspective_M_inv = min_t_pipeline(binary_img, single_ch=True, params_file=params_file)
+    warped_img, undist_img, perspective_M, perspective_M_inv = min_t_   pipeline(binary_img, single_ch=True, params_file=params_file)
     return warped_img, undist_img, perspective_M, perspective_M_inv
 
 def gct_orig_pipeline(test_img, params_file, out_dir=output_dir):
@@ -37,7 +37,6 @@ def gctc_pipeline(test_img):
     global skip_factor
     params_file = params_out_file
     out_dir = output_dir
-    # leftx, lefty, rightx, righty = np.array(dtype=np.int64)
     global left_fit
     global right_fit
     global leftFitLine
@@ -46,43 +45,27 @@ def gctc_pipeline(test_img):
 
     warped_img, _, perspective_M, perspective_M_inv = gct_bin_pipeline(test_img, params_file=params_file, out_dir=out_dir)
     _, undistort_img, _, _ = gct_orig_pipeline(test_img, params_file=params_file, out_dir=out_dir)
-    # skip_factor += 1
-    # print("skip_factor:",skip_factor)
-    # print("left_fit is:", left_fit)
-    # print("right_fit is:", right_fit)
     if skip_factor <= 0:
-        # print("calling slide_window")
         leftx, lefty, rightx, righty, left_fit, right_fit = slide_window(warped_img)
         skip_factor = SKIP_FRAME
         frame_cnt += 1
     else:
-        # print("calling skip_slide_window")
         leftx, lefty, rightx, righty, left_fit, right_fit = skip_slide_window(warped_img, left_fit, right_fit)
         skip_factor -= 1
         frame_cnt += 1
 
-
-    # leftFitLine = Line()
     if leftFitLine.isLineDetected(left_fit):
         leftFitLine.addFit(left_fit)
     else:
         leftFitLine.addFit(leftFitLine.avg_lastnfits)
         left_fit = leftFitLine.avg_lastnfits
-    # leftFitLine.printVals()
-    # rightFitLine = Line()
+
     if rightFitLine.isLineDetected(right_fit):
         rightFitLine.addFit(right_fit)
     else:
         rightFitLine.addFit(rightFitLine.avg_lastnfits)
         right_fit = rightFitLine.avg_lastnfits
-    # rightFitLine.printVals()
 
-    # print("left_fit is:", left_fit)
-    # print("right_fit is:", right_fit)
-
-    # convolve_window((warped_img*255))
-    # plot_lane_curve(leftx, rightx, left_fit, right_fit, left_fitx, right_fitx, ploty)
-    # plot_lane_curve2()
     left_fitx, right_fitx = fit_curve(warped_img, left_fit, right_fit)
 
     left_curverad, right_curverad = calculate_lane_curve_radius(warped_img, left_fit, right_fit)

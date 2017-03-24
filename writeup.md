@@ -20,8 +20,8 @@ The goals / steps of this project are the following:
 [image2a]: ./test_images/test2.jpg "Road Transformed"
 [image2b]: ./examples/lane_undistort_t2.jpg "Road undistorted"
 [image2c]: ./examples/lane_binary.jpg "Binary Example"
-[image3]: ./examples/lane_curve_t1.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image3]: ./examples/lane_curve_t2.png "Warp Example"
+[image4]: ./examples/curve_drawn.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
@@ -102,19 +102,27 @@ This resulted in the following source and destination points:
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+Afterwards, I applied the slide window technique to fit my lane lines with a 2nd order polynomial. The code is in file `slide_window_hist.py` from lines 5 to 116. I'm using using the function `slide_window()` to find the lane line 2nd order polynomial with 9 sliding windows for one frame. For the next frame, I am skipping fitting the lane lines by using the left line fit and right line fit of the previous frame and applying it to fit the 2nd order polynomial in the current frame in the function `skip_slide_window()`. The results can be seen in the following image:
 
-![alt text][image5]
+![alt text][image3]
 
 ####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I did this in lines 41 through 64 in my function `calculate_lane_curve_radius()` and in lines 66 through 101 in my function `draw_lane_curve()` in the file `lane_curvature.py`. I used the earlier fitted left lane and right lane 2nd order polynomial coefficients to calculate the left line and right line curvature in the real world coordinates using the constants:
+
+```
+	ym_per_pix = 30/720 # meters per pixel in y dimension
+	xm_per_pix = 3.7/700 # meters per pixel in x dimension
+
+```
+
+After that, in the function `draw_lane_curve()`, I used the left line and the right line curvature to draw it on the warped image Then, I used the undistorted image, binary warped image and the inverse perspective matrix to unwarp the image. Finally, I calculated the real world line curvature and distance from centre based on the earlier calculated real world left line curvature only.
 
 ####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in lines 9 through 17 in my code in `video_gen.py` in the function `process_video()`.  The main file to run all the different function correctly is `lane-tracker.py` lines 141 through 175. Here is an example of my result on a test image:
 
-![alt text][image6]
+![alt text][image4]
 
 ---
 

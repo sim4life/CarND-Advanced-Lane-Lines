@@ -102,7 +102,7 @@ This resulted in the following source and destination points:
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Afterwards, I applied the slide window technique to fit my lane lines with a 2nd order polynomial. The code is in file `slide_window_hist.py` from lines 5 to 116. I'm using using the function `slide_window()` to find the lane line 2nd order polynomial with 9 sliding windows for one frame. For the next frame, I am skipping fitting the lane lines by using the left line fit and right line fit of the previous frame and applying it to fit the 2nd order polynomial in the current frame in the function `skip_slide_window()`. The results can be seen in the following image:
+Afterwards, I applied the slide window histogram technique to fit my lane lines with a 2nd order polynomial. The code is in file `slide_window_hist.py` from lines 5 to 116. I'm using using the function `slide_window()` to find the lane line 2nd order polynomial with 9 sliding windows for one frame. For the next frame, I am skipping fitting the lane lines by using the left line fit and right line fit of the previous frame and applying it to fit the 2nd order polynomial in the current frame in the function `skip_slide_window()`. The results can be seen in the following image:
 
 ![alt text][image3]
 
@@ -138,5 +138,6 @@ Here's a [link to my video result](./project_video_proc.mp4)
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
-
+I applied many gradient and colour space thresholds to find better lane lines detection. I also tried window convolutions technique but it was giving me very bad results. So finally I settled with thresholding S-channel in HLS colour space, absolute Sobel gradient for x-values and sliding window histogram techniques.
+After using these techniques, I found one small aberration in drawing the lane lines on the video. This aberration was wrong right lane detection in couple of frame in the video. Therefore, I used a smoothing technique to figure out the culprit 2nd order polynomials and replaced them with an average of 2nd order polynomials of previous 5 frames. I applied this in the file `Line.py` class `Line` lines 35 through 79.
+I believe that more tuning with thresholding parameters with colour spaces and Sobel gradients may improve the lane lines detection and eliminate the need of smoothing.

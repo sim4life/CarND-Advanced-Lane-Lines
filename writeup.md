@@ -22,7 +22,6 @@ The goals / steps of this project are the following:
 [image2c]: ./examples/lane_binary.jpg "Binary Example"
 [image3]: ./examples/lane_curve_t2.png "Warp Example"
 [image4]: ./examples/curve_drawn.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video_proc.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
